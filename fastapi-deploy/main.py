@@ -15,7 +15,7 @@ app.add_middleware(
 )
 
 # Server start hote hi model load hoga
-model = joblib.load("model = joblib.load("fastapi-deploy/heart_failure_model.pkl")
+model = joblib.load("fastapi-deploy/heart_failure_model.pkl")
 
 @app.post("/predict")
 async def predict_risk(
