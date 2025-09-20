@@ -1,58 +1,43 @@
 from fastapi import FastAPI, Form
 from fastapi.middleware.cors import CORSMiddleware
-import google.generativeai as genai
-
-# Gemini API key set karo
-genai.configure(api_key="AIzaSyBj5cn7xliPYpmgQt1ZKUHm51gJW0_cPTU")
-
-# Model choose karo
-model = genai.GenerativeModel('gemini-1.5-flash-latest')
+import joblib
 
 # FastAPI instance
 app = FastAPI()
 
-# CORS allow karo takay Android app access kar sake
+# CORS allow (Android app connect kar sake)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Android app ke liye allow all origins
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Server start hote hi model load hoga
+model = joblib.load("heart_failure_model.pkl")
+
 @app.post("/predict")
 async def predict_risk(
-    age: str = Form(...),
-    anaemia: str = Form(...),
-    cpk: str = Form(...),
-    diabetes: str = Form(...),
-    ejection: str = Form(...),
-    bp: str = Form(...),
-    platelets: str = Form(...),
-    sex: str = Form(...),
-    creatinine: str = Form(...),
-    sodium: str = Form(...),
-    smoking: str = Form(...),
+    age: int = Form(...),
+    anaemia: int = Form(...),
+    cpk: int = Form(...),
+    diabetes: int = Form(...),
+    ejection: int = Form(...),
+    bp: int = Form(...),
+    platelets: float = Form(...),
+    sex: int = Form(...),
+    creatinine: float = Form(...),
+    sodium: int = Form(...),
+    smoking: int = Form(...),
 ):
-    prompt = f"""
-    Predict heart failure risk level based on the following patient information:
+    # Features ko arrange karo
+    features = [[
+        age, anaemia, cpk, diabetes, ejection,
+        bp, platelets, sex, creatinine, sodium, smoking
+    ]]
 
-    - Age: {age}
-    - Anaemia: {anaemia}
-    - Creatinine Phosphokinase: {cpk} mcg/L
-    - Diabetes: {diabetes}
-    - Ejection Fraction: {ejection}%
-    - High Blood Pressure: {bp}
-    - Platelets: {platelets} kiloplatelets/mL
-    - Sex: {sex}
-    - Serum Creatinine: {creatinine} mg/dL
-    - Serum Sodium: {sodium} mEq/L
-    - Smoking: {smoking}
+    # Model se prediction lo
+    prediction = model.predict(features)[0]
 
-    Only respond with: High Risk / Moderate Risk / Low Risk.
-    Do not provide any tips, explanation, or additional notes.
-    """
-    
-    response = model.generate_content(prompt)
-    result = response.text.strip()
-    return {"prediction": result}
+    return {"prediction": prediction}
